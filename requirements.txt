@@ -1,0 +1,14 @@
+# Pinned runtime deps (mirrors [project.dependencies] in pyproject.toml).
+# Generated for environments that don't install from pyproject (e.g. Lambda layers).
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+pydantic-settings>=2.2
+pyyaml>=6.0
+boto3>=1.34
+ortools>=9.9
+sqlalchemy>=2.0
+psycopg[binary]>=3.1
+alembic>=1.13
+mangum>=0.17
+python-dotenv>=1.0
