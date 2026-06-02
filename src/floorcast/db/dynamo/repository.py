@@ -50,6 +50,26 @@ class FloorRepository:
                 break
         return racks
 
+    def scan_all_items(self) -> list[dict]:
+        """Return every item in the table (topology + racks), fully paginated.
+
+        DynamoDB caps a single Scan page at 1 MB, so we follow LastEvaluatedKey
+        until exhausted. This is the read path that drives the full-floor
+        /topology render, where we genuinely need every entity in one pass.
+        """
+        items: list[dict] = []
+        kwargs: dict = {}
+        last = None
+        while True:
+            if last:
+                kwargs["ExclusiveStartKey"] = last
+            resp = self.table.scan(**kwargs)
+            items.extend(resp.get("Items", []))
+            last = resp.get("LastEvaluatedKey")
+            if not last:
+                break
+        return items
+
     def heatmap_buckets(self, building_id: str, band_kw: float = 10.0) -> dict[str, int]:
         """Count racks per power band in a building (drives the floor heatmap)."""
         counts: dict[str, int] = {}

@@ -272,6 +272,7 @@ class RackReplacementOptimizer:
                     plans[t].swaps.append(
                         ScheduledSwap(
                             position_id=rack.position_id,
+                            row_id=rack.row_id,
                             suite_id=rack.suite_id,
                             building_id=rack.building_id,
                             from_rack_type=rack.rack_type,

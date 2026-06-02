@@ -33,6 +33,7 @@ class ScheduledSwap(BaseModel):
     """A single rack replacement the optimizer scheduled in a given month."""
 
     position_id: str
+    row_id: str
     suite_id: str
     building_id: str
     from_rack_type: str

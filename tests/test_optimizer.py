@@ -55,6 +55,22 @@ def test_building_and_suite_headroom_never_violated(settings):
             assert util <= usable + 1e-6, f"building {bid} exceeded headroom in month {plan.month}"
 
 
+def test_scheduled_swaps_carry_correct_row_id(settings):
+    # Every swap must know which row it lands in (persisted onto schedule_items),
+    # sourced from the fleet's row identity — never null, never parsed later.
+    # _hot_row_fleet deterministically yields the cool 2023 candidate as a swap.
+    fleet, _ = _hot_row_fleet(settings)
+    optimizer = RackReplacementOptimizer(settings)
+    result = optimizer.solve(fleet, run_id="rowid", created_at=datetime.now(timezone.utc))
+
+    pos_to_row = {r.position_id: r.row_id for r in fleet.racks}
+    swaps = [swap for plan in result.plan for swap in plan.swaps]
+    assert swaps, "expected the fixture floor to produce at least one swap"
+    for swap in swaps:
+        assert swap.row_id, f"swap at {swap.position_id} has no row_id"
+        assert swap.row_id == pos_to_row[swap.position_id]
+
+
 def test_throughput_caps_respected(settings):
     fleet = _fleet_from_floor(settings)
     optimizer = RackReplacementOptimizer(settings)

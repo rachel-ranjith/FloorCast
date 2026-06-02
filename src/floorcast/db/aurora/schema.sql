@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS optimization_runs (
     horizon_months       INTEGER NOT NULL,
     objective_value      DOUBLE PRECISION,
     total_swaps          INTEGER,
+    -- Aggregate soft row-tier overage (kW-months) across the plan; read back by /runs.
+    total_row_overage_kw DOUBLE PRECISION,
     solver_wall_time_ms  INTEGER,
 
     -- Exact, fully-resolved config the solver used (YAML + scenario overrides
@@ -52,6 +54,10 @@ CREATE TABLE IF NOT EXISTS optimization_runs (
     created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
     completed_at         TIMESTAMPTZ
 );
+
+-- Additive migration for databases created before total_row_overage_kw existed
+-- (CREATE TABLE IF NOT EXISTS above won't add a column to an existing table).
+ALTER TABLE optimization_runs ADD COLUMN IF NOT EXISTS total_row_overage_kw DOUBLE PRECISION;
 
 CREATE INDEX IF NOT EXISTS idx_runs_scenario ON optimization_runs(scenario_id);
 CREATE INDEX IF NOT EXISTS idx_runs_status   ON optimization_runs(status);

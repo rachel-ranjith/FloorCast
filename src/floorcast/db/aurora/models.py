@@ -72,6 +72,9 @@ class OptimizationRun(Base):
     horizon_months: Mapped[int] = mapped_column(Integer, nullable=False)
     objective_value: Mapped[float | None] = mapped_column(Float)
     total_swaps: Mapped[int | None] = mapped_column(Integer)
+    # Aggregate soft row-tier overage (kW-months) across the plan; 0.0 when every
+    # row stayed within headroom. Surfaced in the run list/detail read paths.
+    total_row_overage_kw: Mapped[float | None] = mapped_column(Float)
     solver_wall_time_ms: Mapped[int | None] = mapped_column(Integer)
 
     resolved_config: Mapped[dict] = mapped_column(JSONB, nullable=False)

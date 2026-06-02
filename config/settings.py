@@ -72,6 +72,25 @@ class DynamoConfig(BaseModel):
     gsi_generation: str = "gsi-generation"
 
 
+class CorsConfig(BaseModel):
+    """Browser CORS policy for the API.
+
+    Defaults cover the usual frontend dev servers (Next.js :3000, Vite :5173).
+    Override the full list via FLOORCAST_CORS__ALLOW_ORIGINS (a JSON array), e.g.
+        FLOORCAST_CORS__ALLOW_ORIGINS='["https://app.example.com"]'
+    """
+
+    allow_origins: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+    ]
+    allow_credentials: bool = True
+    allow_methods: list[str] = ["*"]
+    allow_headers: list[str] = ["*"]
+
+
 class AuroraConfig(BaseModel):
     dsn: str = "postgresql+psycopg://floorcast:floorcast@localhost:5432/floorcast"
     schema_: str = Field("public", alias="schema")
@@ -131,6 +150,7 @@ class Settings(BaseSettings):
 
     dynamo: DynamoConfig = DynamoConfig()
     aurora: AuroraConfig = AuroraConfig()
+    cors: CorsConfig = CorsConfig()
     power: PowerConfig = PowerConfig()
     optimizer: OptimizerConfig = OptimizerConfig()
     rack_catalog: dict[str, RackSpec] = {}
