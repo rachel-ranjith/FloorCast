@@ -1,0 +1,212 @@
+# =============================================================================
+# Floorcast configuration — the single, standard estate.
+# -----------------------------------------------------------------------------
+# This is THE config (loaded by default via config/settings.py; override the
+# path with FLOORCAST_CONFIG_FILE). It pairs with the demo floor that
+# `scripts/seed_data.py` seeds (see generate_demo_floor) to make a deliberately
+# "hard" estate where the optimizer's objectives genuinely trade off.
+#
+# Regression baseline: on the seeded floor, objective=maximize_racks_modernized
+# with no overrides => 96 swaps / 612.0 row-overage (see tests).
+#
+# The catalog exposes THREE diverging targets per family (a cheap "value" rack, a
+# power-hungry "max-compute" rack, and a "high-efficiency" rack) so that
+# maximize_compute, maximize_value_per_pound and maximize_efficiency each pick a
+# DIFFERENT target. Combined with the floor's binding throughput and
+# swap-avoidable overage, every objective is forced into real tradeoffs.
+# =============================================================================
+
+dynamo:
+  table_name: floorcast
+  gsi_power: gsi-power
+  gsi_generation: gsi-generation
+
+aurora:
+  schema: public
+  pool_size: 5
+  max_overflow: 10
+
+# -----------------------------------------------------------------------------
+# Catalog. Current fleet = 2023 + 2024 (both retirable here — see optimizer
+# .retire_generation_at_or_below: 2024). Targets = gen-2025, THREE per family.
+#
+# Per family the three targets are engineered to diverge on three axes so that
+# different objectives select different racks:
+#   - "-value" : lowest cost, decent compute  -> wins compute-per-£   (value)
+#   - "-max"   : highest raw compute, high power & cost -> wins raw compute
+#   - "-eff"   : best compute-per-kW (low power) -> wins efficiency, least overage
+# (verify the argmaxes with: make seed-dry)
+# -----------------------------------------------------------------------------
+rack_catalog:
+  # ---- current fleet: 2023 (retirable) ----
+  compute-2023:
+    family: compute
+    generation: 2023
+    power_draw_kw: 8.5
+    rack_units: 42
+    is_replacement_target: false
+    cost: 32000
+    compute_capability: 60
+    producer: Helix Compute
+  storage-2023:
+    family: storage
+    generation: 2023
+    power_draw_kw: 6.0
+    rack_units: 42
+    is_replacement_target: false
+    cost: 18000
+    compute_capability: 20
+    producer: Vanta Storage
+  ai-2023:
+    family: ai
+    generation: 2023
+    power_draw_kw: 22.0
+    rack_units: 42
+    is_replacement_target: false
+    cost: 95000
+    compute_capability: 180
+    producer: Cirrus AI
+
+  # ---- current fleet: 2024 (also retirable in the demo) ----
+  compute-2024:
+    family: compute
+    generation: 2024
+    power_draw_kw: 11.0
+    rack_units: 42
+    is_replacement_target: false
+    cost: 41000
+    compute_capability: 85
+    producer: Helix Compute
+  storage-2024:
+    family: storage
+    generation: 2024
+    power_draw_kw: 7.5
+    rack_units: 42
+    is_replacement_target: false
+    cost: 22000
+    compute_capability: 28
+    producer: Vanta Storage
+  ai-2024:
+    family: ai
+    generation: 2024
+    power_draw_kw: 35.0
+    rack_units: 42
+    is_replacement_target: false
+    cost: 150000
+    compute_capability: 300
+    producer: Cirrus AI
+
+  # ---- compute targets (gen 2025) ----
+  compute-2025-value:    # wins value-per-£
+    family: compute
+    generation: 2025
+    power_draw_kw: 12.0
+    rack_units: 42
+    is_replacement_target: true
+    cost: 40000
+    compute_capability: 100
+    producer: Helix Compute
+  compute-2025-max:      # wins raw compute (power-hungry, pricey)
+    family: compute
+    generation: 2025
+    power_draw_kw: 20.0
+    rack_units: 42
+    is_replacement_target: true
+    cost: 90000
+    compute_capability: 200
+    producer: Helix Compute
+  compute-2025-eff:      # wins compute-per-kW (lowest power)
+    family: compute
+    generation: 2025
+    power_draw_kw: 10.0
+    rack_units: 42
+    is_replacement_target: true
+    cost: 60000
+    compute_capability: 130
+    producer: Borealis Systems
+
+  # ---- storage targets (gen 2025) ----
+  storage-2025-value:
+    family: storage
+    generation: 2025
+    power_draw_kw: 7.0
+    rack_units: 42
+    is_replacement_target: true
+    cost: 20000
+    compute_capability: 35
+    producer: Vanta Storage
+  storage-2025-max:
+    family: storage
+    generation: 2025
+    power_draw_kw: 11.0
+    rack_units: 42
+    is_replacement_target: true
+    cost: 38000
+    compute_capability: 60
+    producer: Vanta Storage
+  storage-2025-eff:
+    family: storage
+    generation: 2025
+    power_draw_kw: 6.5
+    rack_units: 42
+    is_replacement_target: true
+    cost: 30000
+    compute_capability: 48
+    producer: Borealis Systems
+
+  # ---- ai targets (gen 2025) — highest compute, highest power: the headroom risk ----
+  ai-2025-value:
+    family: ai
+    generation: 2025
+    power_draw_kw: 42.0
+    rack_units: 42
+    is_replacement_target: true
+    cost: 160000
+    compute_capability: 400
+    producer: Cirrus AI
+  ai-2025-max:
+    family: ai
+    generation: 2025
+    power_draw_kw: 65.0
+    rack_units: 42
+    is_replacement_target: true
+    cost: 320000
+    compute_capability: 720
+    producer: Cirrus AI
+  ai-2025-eff:
+    family: ai
+    generation: 2025
+    power_draw_kw: 38.0
+    rack_units: 42
+    is_replacement_target: true
+    cost: 230000
+    compute_capability: 560
+    producer: Borealis Systems
+
+# -----------------------------------------------------------------------------
+# Power envelope — same shape as default (row usable = 90 * 0.8 = 72 kW). The
+# demo floor's "near-threshold" rows are built right under 72 so that swapping
+# their candidate tips them over (swap-avoidable overage).
+# -----------------------------------------------------------------------------
+power:
+  headroom_pct: 0.20
+  building_capacity_mw: 6.0
+  suite_capacity_mw: 1.5
+  row_capacity_kw: 90.0
+
+# -----------------------------------------------------------------------------
+# Optimizer. Throughput (8/mo x 12 = 96 swap slots) is deliberately LESS than
+# the number of worth-doing candidates the demo floor seeds (110), so the solver
+# must prioritize. 2024s are retirable here too.
+# -----------------------------------------------------------------------------
+optimizer:
+  horizon_months: 12
+  max_swaps_per_month: 8
+  max_swaps_per_suite_per_month: 3
+  swap_cost_per_rack: 1.0
+  deferral_penalty_per_month: 0.15
+  row_overage_penalty: 1000.0
+  solver_time_limit_seconds: 60
+  retire_generation_at_or_below: 2024
+  objective: maximize_racks_modernized
+  time_discount: 1.0

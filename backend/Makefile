@@ -21,13 +21,13 @@ create-tables:  ## Create the DynamoDB table (uses .env / config)
 apply-schema:  ## Apply the Aurora/Postgres schema
 	python scripts/apply_aurora_schema.py
 
-seed:  ## Seed the fake data centre into DynamoDB
+seed:  ## Purge + seed the standard floor into DynamoDB (prints the tension report)
 	python scripts/seed_data.py
 
-seed-dry:  ## Generate the fake data centre to JSON (no AWS needed)
+seed-dry:  ## Generate the floor to JSON (no AWS); prints the tension report
 	python scripts/seed_data.py --dry-run
 
-api:  ## Run the FastAPI app locally
+api:  ## Run the FastAPI app locally (config/floorcast.yaml)
 	uvicorn floorcast.api.main:app --reload --app-dir src --port 8080
 
 test:  ## Run the test suite

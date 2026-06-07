@@ -44,7 +44,7 @@ class ScheduledSwap(BaseModel):
 
 
 class MonthlyPlan(BaseModel):
-    month: int
+    month: int  # 1-based step index within the plan
     swaps: list[ScheduledSwap] = []
     # Peak utilization (load / capacity) reached this month, per tier.
     building_peak_util: dict[str, float] = {}
@@ -52,6 +52,13 @@ class MonthlyPlan(BaseModel):
     # Total row-tier overage (kW above the row headroom threshold) this month.
     # Row headroom is a soft constraint; this is what the optimizer minimizes.
     row_overage_kw: float = 0.0
+    # ---- Stage 3: calendar labels (None in abstract-month mode) ----
+    label: str | None = None  # "2026-05" (calendar) or "1" (abstract)
+    year: int | None = None
+    calendar_month: int | None = None  # 1-12
+    quarter: str | None = None  # "2026-Q2" (calendar) or None (abstract)
+    # Total swap cost (£) incurred this month.
+    spend: float = 0.0
 
 
 class OptimizationResult(BaseModel):
@@ -64,5 +71,13 @@ class OptimizationResult(BaseModel):
     # Sum of row-tier overage (kW-months) across the whole plan; 0.0 when every
     # row stays within its (soft) headroom threshold.
     total_row_overage_kw: float = 0.0
+    # ---- per-period swap spend (£) for budget visualization ----
+    # monthly_spend keyed by the plan-month label ("2026-05" in calendar mode,
+    # "1".."N" in abstract mode). quarterly_spend keyed by fiscal quarter
+    # ("2026-Q2") and yearly_spend keyed by year ("2026"); both empty in abstract
+    # mode (no calendar => no quarters/years).
+    monthly_spend: dict[str, float] = {}
+    quarterly_spend: dict[str, float] = {}
+    yearly_spend: dict[str, float] = {}
     solver_wall_time_ms: int | None = None
     created_at: datetime

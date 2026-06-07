@@ -1,3 +1,8 @@
+# ── Floorcast monorepo umbrella .gitignore ──
+# Covers the whole repo: root-level artifacts, backend/, and the upcoming
+# frontend/. backend/ also keeps its own .gitignore (Python-specific); this is
+# the umbrella so patterns apply everywhere.
+
 # Python
 __pycache__/
 *.py[cod]
@@ -9,11 +14,6 @@ dist/
 venv/
 env/
 
-# Env / secrets
-.env
-.env.local
-*.local.yaml
-
 # Test / coverage
 .pytest_cache/
 .mypy_cache/
@@ -24,6 +24,19 @@ htmlcov/
 # Seed / scratch output
 *.seed.json
 scratch/
+
+# Env / secrets
+.env
+.env.local
+*.local
+*.local.yaml
+
+# Frontend (Node / Next.js / Vercel) — for the future frontend/
+node_modules/
+.next/
+.vercel/
+.turbo/
+*.tsbuildinfo
 
 # OS / editor
 .DS_Store
